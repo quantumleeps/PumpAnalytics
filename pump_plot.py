@@ -118,13 +118,13 @@ class PumpPlot:
             h_ = ((make_polyfit(a['q'], a['h'], 1000, 4)[1])*a['h'].units).to(self.units['h'])
             N_ = ((make_polyfit(a['q'], a['N'], 1000, 4)[1])*a['N'].units).to(self.units['N'])
             if self.efficiency_colorbar:
-                ax.scatter(q_,h_, c=cm.RdYlGn(np.abs(e_**(3/2))), edgecolor='none')
+                ax.scatter(q_,h_, c=cm.RdYlGn(np.abs(e_**(3/2))), edgecolor='none', zorder=1)
             else:
                 ax.plot(q_, h_)
             if self.show_test_dots:
                 ax.scatter(a['q'].to(self.units['q']), a['h'].to(self.units['h']))
             if 'h' in b.duty_point.keys():
-                ax.scatter([(b.duty_point['q']).to(self.units['q'])],[(b.duty_point['h']).to(self.units['h'])], s=[1000], marker="+", c="black")
+                ax.scatter([(b.duty_point['q']).to(self.units['q'])],[(b.duty_point['h']).to(self.units['h'])], s=[1000], marker="+", c="black", zorder=2)
 
         ylbl = ax.yaxis.get_label()
         ax.set_ylabel(unit_mapper[ylbl.get_text()])
