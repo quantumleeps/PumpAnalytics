@@ -23,7 +23,9 @@ unit_mapper = {
     'kilowatt': 'Power (kW)',
     'dimensionless': 'Efficiency',
     'megawatt': 'Power (mW)',
-    'meter**3/second': 'Flowrate (m^3/s)'
+    'meter**3/second': 'Flowrate (m^3/s)',
+    'btu/hour': 'Power (BTU/hr)',
+    'hogshead/fortnight': 'Flowrate (hogshead/fortnight)'
 }
 
 def make_polyfit(x,y,n,e):
@@ -103,30 +105,33 @@ class PumpPlot:
         fig.tight_layout(pad=3)
         fig.savefig(save_location, dpi=300)
 
+    def h_curve(self, title, save_location):
+        plt.figure()
+        fig, ax = plt.subplots(1)
+        fig.suptitle(title)
+        fig.subplots_adjust(hspace=0.1)
+        fig.set_size_inches(11, 6)
+        for b in self.pump_conditions:
+            a = b.ready_curve_for_plotting()
+            q_ = ((make_polyfit(a['q'], a['h'], 1000, 4)[0])*a['q'].units).to(self.units['q'])
+            e_ = ((make_polyfit(a['q'], a['e'], 1000, 4)[1])*a['e'].units).to(self.units['e'])
+            h_ = ((make_polyfit(a['q'], a['h'], 1000, 4)[1])*a['h'].units).to(self.units['h'])
+            N_ = ((make_polyfit(a['q'], a['N'], 1000, 4)[1])*a['N'].units).to(self.units['N'])
+            if self.efficiency_colorbar:
+                ax.scatter(q_,h_, c=cm.RdYlGn(np.abs(e_**(3/2))), edgecolor='none')
+            else:
+                ax.plot(q_, h_)
+            if self.show_test_dots:
+                ax.scatter(a['q'].to(self.units['q']), a['h'].to(self.units['h']))
+            if 'h' in b.duty_point.keys():
+                ax.scatter([(b.duty_point['q']).to(self.units['q'])],[(b.duty_point['h']).to(self.units['h'])], s=[1000], marker="+", c="black")
 
-    # def h_curve(self, title, save_location):
-    #     plt.figure()
-    #     fig, ax = plt.subplots(1)
-    #     fig.suptitle(title)
-    #     fig.subplots_adjust(hspace=0.1)
-    #     fig.set_size_inches(11, 8.5)
-    #     for b in self.pump_conditions:
-    #         a = b.ready_curve_for_plotting()
-    #         q_, e_ = make_polyfit(a['q'], a['e'], 1000, 4)
-    #         h_ = make_polyfit(a['q'], a['h'], 1000, 4)[1]
-    #         N_ = make_polyfit(a['q'], a['N'], 1000, 4)[1]
-    #         ax.scatter(q_,h_, c=cm.RdYlGn(np.abs(e_**(3/2))), edgecolor='none')
-    #         # ax[0].plot(q_, h_)
-    #         ax.scatter(a['q'], a['h'])
-    #         if 'h' in b.duty_point.keys():
-    #             ax.scatter([b.duty_point['q']],[b.duty_point['h']], s=[1000], marker="+", c="black")
+        ylbl = ax.yaxis.get_label()
+        ax.set_ylabel(unit_mapper[ylbl.get_text()])
+        # ax.set_xlabel('')
+        ax.grid(True)
+        ax.minorticks_on()
+        ax.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
 
-    #     ylbl = ax.yaxis.get_label()
-    #     ax.set_ylabel(unit_mapper[ylbl.get_text()])
-    #     # ax.set_xlabel('')
-    #     ax.grid(True)
-    #     ax.minorticks_on()
-    #     ax.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-
-    #     fig.tight_layout(pad=3)
-    #     fig.savefig(save_location, dpi=300)
+        fig.tight_layout(pad=3)
+        fig.savefig(save_location, dpi=300)
