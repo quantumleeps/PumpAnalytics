@@ -144,9 +144,14 @@ class PumpPlot:
             q_ = ((make_polyfit(a['q'], a['h'], 1000, 4)[0])*a['q'].units).to(self.units['q'])
             e_ = ((make_polyfit(a['q'], a['e'], 1000, 4)[1])*a['e'].units).to(self.units['e'])
             h_ = ((make_polyfit(a['q'], a['h'], 1000, 4)[1])*a['h'].units).to(self.units['h'])
-            N_ = ((make_polyfit(a['q'], a['N'], 1000, 4)[1])*a['N'].units).to(self.units['N'])
             if self.efficiency_colorbar:
                 colorcurve = ax.scatter(q_,h_, c=e_, norm=colors.PowerNorm(gamma=3.1), cmap=self.color_map_type, edgecolor='none', zorder=1)
+                if not custom_colorbar_ticks == None:
+                    cbar = fig.colorbar(mappable=colorcurve, ticks=custom_colorbar_ticks)
+                else:
+                    cbar = fig.colorbar(mappable=colorcurve)
+                cbar.ax.get_yaxis().labelpad = 15
+                cbar.ax.set_ylabel('Efficiency', rotation=270)
             else:
                 ax.plot(q_, h_)
             if self.show_test_dots:
@@ -167,12 +172,7 @@ class PumpPlot:
         ax.minorticks_on()
         ax.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
 
-        
-        if not custom_colorbar_ticks == None:
-            cbar = fig.colorbar(mappable=colorcurve, ticks=custom_colorbar_ticks)
-        else:
-            cbar = fig.colorbar(mappable=colorcurve)
-        cbar.ax.get_yaxis().labelpad = 15
-        cbar.ax.set_ylabel('Efficiency', rotation=270)
+
+
         fig.tight_layout(pad=3)
         fig.savefig(save_location, dpi=300)
