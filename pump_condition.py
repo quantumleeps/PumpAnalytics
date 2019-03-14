@@ -31,6 +31,7 @@ class PumpCondition:
         self.curve_data = []
         self.units = units_US
         self.duty_point = {}
+        self.dp_label = None
 
     def add_curve_point(self, p):
         n = {}
@@ -128,7 +129,9 @@ class PumpCondition:
             polyNz = np.poly1d(polyN)
             return polyNz(q_norm.magnitude)*uN
 
-    def find_duty_point(self, q_desired, h_desired, n_max):
+    def find_duty_point(self, q_desired, h_desired, dp_label=None):
+        if not dp_label == None:
+            self.dp_label = dp_label
         (q_desired, h_desired)
         uh = self.curve_data[0]['h'].units
         h_desired_norm = h_desired.to(uh)
