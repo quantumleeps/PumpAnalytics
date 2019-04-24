@@ -1,10 +1,14 @@
 import numpy as np
 import pint
 import copy
+from pump_plot import make_polyfit
 
 u = pint.UnitRegistry()
 u.setup_matplotlib(True)
 u.define('meter_H2O = 100*cmH2O = mH2O')
+u.define('psi = pound_force_per_square_inch')
+u.define('gpm = gallon/minute')
+u.define('gph = gallon/hour')
 
 units_metric = {
             'N': 'kilowatt',
@@ -128,6 +132,40 @@ class PumpCondition:
             polyN = np.polyfit(a['q'].magnitude, a['N'].magnitude, 4)
             polyNz = np.poly1d(polyN)
             return polyNz(q_norm.magnitude)*uN
+
+    def find_single_speed_duty_point(self, h_actual, dp_label=None):
+        if not dp_label == None:
+            self.dp_label = dp_label
+        a = self.ready_curve_for_plotting()
+        q_ = ((make_polyfit(a['q'], a['h'], 10000, 4)[0])*a['q'].units).to(self.units['q'])
+        e_ = ((make_polyfit(a['q'], a['e'], 10000, 4)[1])*a['e'].units).to(self.units['e'])
+        h_ = ((make_polyfit(a['q'], a['h'], 10000, 4)[1])*a['h'].units).to(self.units['h'])
+        N_ = ((make_polyfit(a['q'], a['N'], 10000, 4)[1])*a['N'].units).to(self.units['N'])
+        n = self.curve_data[0]['n']#units driven by self
+        s = self.curve_data[0]['s'] #units driven by self
+        b = sorted([x for x in list(h_)], reverse=True)
+
+        new = self.change_conditions(n, s)
+
+        for i, h in enumerate(b):
+            if h < h_actual:
+                new.duty_point = {
+                    'q': q_[i],
+                    'h': new.calc_h(q_[i]),
+                    'e': new.calc_e(q_[i]),
+                    'N': new.calc_N(q_[i]),
+                }
+                break
+                # return the duty point condition
+        print('\n')
+        print('Flow: {:.2f} {}'.format(new.duty_point['q'].magnitude, str(new.duty_point['q'].units)))
+        print('Head: {:.2f} {}'.format(new.duty_point['h'].magnitude, str(new.duty_point['h'].units)))
+        print('Efficiency: {:.1f} percent'.format(100*new.duty_point['e'].magnitude))
+        print('Power: {:.2f} {}'.format(new.duty_point['N'].magnitude, str(new.duty_point['N'].units)))
+        print('Shaftspeed: {:.1f} {}'.format(new.curve_data[0]['n'].magnitude, str(new.curve_data[0]['n'].units)))
+        print('Specific Gravity: {:.2f}'.format(new.curve_data[0]['s'].magnitude))
+        return new
+
 
     def find_duty_point(self, q_desired, h_desired, dp_label=None):
         if not dp_label == None:
